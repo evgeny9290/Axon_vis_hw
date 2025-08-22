@@ -24,12 +24,12 @@ class Detector:
         thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)[1]
         dilated = cv2.dilate(thresh, None, iterations=2)
 
-        cnts = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cnts = imutils.grab_contours(cnts)
+        contours = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = imutils.grab_contours(contours)
 
         detections: List[Detection] = []
 
-        for c in cnts:
+        for c in contours:
             if cv2.contourArea(c) < self.min_area:
                 continue
 

@@ -2,9 +2,9 @@ from multiprocessing import Process, Queue
 from pathlib import Path
 from contextlib import AbstractContextManager
 
-from streamer import streamer_process
-from detector import detector_process
-from presentor import presenter_process
+from DetectionPipeline.streamer import streamer_process
+from DetectionPipeline.detector import detector_process
+from DetectionPipeline.presentor import presenter_process
 
 
 class VideoPipeline(AbstractContextManager):
@@ -32,7 +32,7 @@ class VideoPipeline(AbstractContextManager):
 
 
 def main():
-    video_path = Path(__file__).resolve().parent / "People-6387.mp4"
+    video_path = Path(__file__).resolve().parent / "Data" / "People-6387.mp4"
     with VideoPipeline(video_path, queue_size=10):
         pass
 
