@@ -3,9 +3,9 @@ import cv2
 from datetime import datetime
 
 
-def presenter_process(input_queue: Queue) -> None:
+def presenter_process(detections_input_queue: Queue) -> None:
     while True:
-        item = input_queue.get()
+        item = detections_input_queue.get()
         if item is None:
             break
 
@@ -25,7 +25,7 @@ def presenter_process(input_queue: Queue) -> None:
 
         # Show frame
         cv2.imshow("Presenter", res)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) != -1:
             break
 
     cv2.destroyAllWindows()

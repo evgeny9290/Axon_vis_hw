@@ -10,12 +10,12 @@ from DetectionPipeline.presentor import presenter_process
 class VideoPipeline(AbstractContextManager):
     def __init__(self, video_path: Path, queue_size: int = 10):
         self.video_path = video_path
-        self.queue_raw = Queue(maxsize=queue_size)
-        self.queue_detected = Queue(maxsize=queue_size)
+        self.frames_queue = Queue(maxsize=queue_size)
+        self.detections_queue = Queue(maxsize=queue_size)
 
-        self.p_streamer = Process(target=streamer_process, args=(self.video_path, self.queue_raw))
-        self.p_detector = Process(target=detector_process, args=(self.queue_raw, self.queue_detected))
-        self.p_presenter = Process(target=presenter_process, args=(self.queue_detected,))
+        self.p_streamer = Process(target=streamer_process, args=(self.video_path, self.frames_queue))
+        self.p_detector = Process(target=detector_process, args=(self.frames_queue, self.detections_queue))
+        self.p_presenter = Process(target=presenter_process, args=(self.detections_queue,))
 
     def __enter__(self):
         self.p_streamer.start()
@@ -25,9 +25,9 @@ class VideoPipeline(AbstractContextManager):
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.p_streamer.join()
-        self.queue_raw.put(None)  # signal shutdown to detector
+        self.frames_queue.put(None)  # signal shutdown to detector
         self.p_detector.join()
-        self.queue_detected.put(None)  # signal shutdown to presenter
+        self.detections_queue.put(None)  # signal shutdown to presenter
         self.p_presenter.join()
 
 

@@ -3,11 +3,11 @@ from typing import Tuple, List
 import cv2
 import imutils
 
-BBox = Tuple[int, int, int, int]
-Detection = Tuple[BBox, cv2.Mat]
-
 
 class Detector:
+    BBox = Tuple[int, int, int, int]
+    Detection = Tuple[BBox, cv2.Mat]
+
     def __init__(self, min_area: int = 500):
         self.first_frame = None
         self.min_area = min_area
@@ -27,7 +27,7 @@ class Detector:
         contours = cv2.findContours(dilated.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = imutils.grab_contours(contours)
 
-        detections: List[Detection] = []
+        detections: List[Detector.Detection] = []
 
         for c in contours:
             if cv2.contourArea(c) < self.min_area:
@@ -40,12 +40,12 @@ class Detector:
         return frame, detections
 
 
-def detector_process(input_queue: Queue, output_queue: Queue) -> None:
+def detector_process(frames_input_queue: Queue, detections_output_queue: Queue) -> None:
     detector = Detector()
     while True:
-        frame = input_queue.get()
+        frame = frames_input_queue.get()
         if frame is None:
             break
 
         frame_out, detections = detector.detect(frame)
-        output_queue.put((frame_out, detections))
+        detections_output_queue.put((frame_out, detections))
