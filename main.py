@@ -1,32 +1,40 @@
 from multiprocessing import Process, Queue
 from pathlib import Path
+from contextlib import AbstractContextManager
 
 from streamer import streamer_process
 from detector import detector_process
 from presentor import presenter_process
 
 
+class VideoPipeline(AbstractContextManager):
+    def __init__(self, video_path: Path, queue_size: int = 10):
+        self.video_path = video_path
+        self.queue_raw = Queue(maxsize=queue_size)
+        self.queue_detected = Queue(maxsize=queue_size)
+
+        self.p_streamer = Process(target=streamer_process, args=(self.video_path, self.queue_raw))
+        self.p_detector = Process(target=detector_process, args=(self.queue_raw, self.queue_detected))
+        self.p_presenter = Process(target=presenter_process, args=(self.queue_detected,))
+
+    def __enter__(self):
+        self.p_streamer.start()
+        self.p_detector.start()
+        self.p_presenter.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.p_streamer.join()
+        self.queue_raw.put(None)  # signal shutdown to detector
+        self.p_detector.join()
+        self.queue_detected.put(None)  # signal shutdown to presenter
+        self.p_presenter.join()
+
+
 def main():
-    queue_raw = Queue(maxsize=10)         # From Streamer to Detector
-    queue_detected = Queue(maxsize=10)    # From Detector to Presenter (TBD)
-
     video_path = Path(__file__).resolve().parent / "People-6387.mp4"
-
-    p_streamer = Process(target=streamer_process, args=(video_path, queue_raw))
-    p_detector = Process(target=detector_process, args=(queue_raw, queue_detected))
-    p_presenter = Process(target=presenter_process, args=(queue_detected,))
-
-    p_streamer.start()
-    p_detector.start()
-    p_presenter.start()
-
-    p_streamer.join()
-    queue_raw.put(None)  # shutdown detector
-    p_detector.join()
-    queue_detected.put(None)  # shutdown presenter
-    p_presenter.join()
-
-    print("[Main] Pipeline completed.")
+    with VideoPipeline(video_path, queue_size=10):
+        pass
 
 
 if __name__ == "__main__":

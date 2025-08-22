@@ -7,13 +7,12 @@ def presenter_process(input_queue: Queue) -> None:
     while True:
         item = input_queue.get()
         if item is None:
-            print("[Presenter] Shutdown signal received.")
             break
 
         frame, detections = item
-
         blurred = cv2.GaussianBlur(frame, (21, 21), 0)
         res = frame.copy()
+
         # Draw detections
         for (bbox, _) in detections:
             x, y, w, h = bbox
@@ -30,4 +29,3 @@ def presenter_process(input_queue: Queue) -> None:
             break
 
     cv2.destroyAllWindows()
-    print("[Presenter] Finished displaying.")

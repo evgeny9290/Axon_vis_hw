@@ -8,13 +8,11 @@ Detection = Tuple[BBox, cv2.Mat]
 
 
 class Detector:
-    def __init__(self, min_area: int = 500):#, resize_width: int = 500):
+    def __init__(self, min_area: int = 500):
         self.first_frame = None
         self.min_area = min_area
-        #self.resize_width = resize_width
 
     def detect(self, frame: cv2.Mat) -> Tuple[cv2.Mat, List[Detection]]:
-        #resized = imutils.resize(frame, width=self.resize_width)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
@@ -47,10 +45,7 @@ def detector_process(input_queue: Queue, output_queue: Queue) -> None:
     while True:
         frame = input_queue.get()
         if frame is None:
-            print("[Detector] Shutdown signal received.")
             break
 
         frame_out, detections = detector.detect(frame)
         output_queue.put((frame_out, detections))
-
-    print("[Detector] Finished detection.")
